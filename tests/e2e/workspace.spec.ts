@@ -155,9 +155,18 @@ test('three isolated projects, SQL, rename, table browser, cross-tab ownership, 
 
 test('all five services, RLS, durable Auth users and objects, cancellation, and bounded results', async ({
   page,
+  browser,
 }) => {
+  const cdp = await browser.newBrowserCDPSession();
+  const liveWorkers = async () =>
+    (await cdp.send('Target.getTargets')).targetInfos
+      .filter((t) => t.type === 'worker')
+      .map((t) => t.url)
+      .sort();
   await page.goto('/');
   await create(page, 'Service lab');
+  // Confirm that this measures real running Workers before using it for cleanup.
+  expect((await liveWorkers()).length).toBeGreaterThan(0);
   const result = await api<any>(
     page,
     `
@@ -188,7 +197,20 @@ test('all five services, RLS, durable Auth users and objects, cancellation, and 
   expect(result.bounded).toEqual({ rows: 1000, truncated: true });
   expect(result.cancelled).toBe('57014');
   await api(page, 'await manager.close();');
-  await expect.poll(() => page.workers().length).toBe(0);
+  // Browser-owned target enumeration avoids stale Playwright worker handles after termination.
+  await expect.poll(liveWorkers).toEqual([]);
+  expect(
+    await api<number>(
+      page,
+      "return (await navigator.locks.query()).held.filter(l=>l.name?.startsWith('supa-wasm/')).length",
+    ),
+  ).toBe(0);
+  if (page.workers().length)
+    console.log(
+      'Closed Worker handles retained by Playwright:',
+      page.workers().map((w) => w.url()),
+    );
+  await cdp.detach();
 });
 
 test('failed downloads, corrupt backups, quota failures, fingerprint guards, and deletion recovery preserve data', async ({

@@ -3,6 +3,12 @@ import { chromium, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 const url = process.env.PAGES_URL ?? 'http://127.0.0.1:4175/supaworld/';
 const browser = await chromium.launch();
+const cdp = await browser.newBrowserCDPSession();
+const liveWorkers = async () =>
+  (await cdp.send('Target.getTargets')).targetInfos
+    .filter((t) => t.type === 'worker')
+    .map((t) => t.url)
+    .sort();
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await context.newPage();
 const errors = [];
@@ -46,6 +52,7 @@ try {
   expect(await page.evaluate(() => window.__SUPAWORLD_TEST__)).toBeUndefined();
   expect(requests.filter((u) => new URL(u).pathname.includes('/runtime/'))).toEqual([]);
   await create('Pages alpha');
+  expect((await liveWorkers()).length).toBeGreaterThan(0);
   const original = page.url();
   await page.getByRole('button', { name: 'Check services', exact: true }).click();
   await expect(page.locator('.diagnostic-row')).toHaveCount(5, { timeout: 120_000 });
@@ -85,7 +92,7 @@ try {
   await query('SELECT body FROM public.notes', 'pages-persisted');
   await page.getByRole('button', { name: 'Stop', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Open project', exact: true })).toBeVisible();
-  await expect.poll(() => page.workers().length).toBe(0);
+  await expect.poll(liveWorkers).toEqual([]);
   expect(errors).toEqual([]);
   expect(writes).toEqual([]);
   console.log(
