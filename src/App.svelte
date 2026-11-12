@@ -311,7 +311,9 @@
 <div class="app-shell">
   <aside class="app-sidebar">
     <a class="brand" href="#/projects" aria-label="Supaworld home"
-      ><img src="/icon.svg" alt="" /><span>supaworld<span class="brand-period">.</span></span></a
+      ><img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" /><span
+        >supaworld<span class="brand-period">.</span></span
+      ></a
     >
     <div class="workspace-label">
       <span class="workspace-avatar">Y</span>

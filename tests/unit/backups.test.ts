@@ -23,6 +23,11 @@ const base = () => ({
 describe('physical backup validation', () => {
   it('accepts a bounded, complete inventory', () =>
     expect(validateManifest(base()).files).toHaveLength(2));
+  it('accepts the previous URL-only host build without changing provisioning inputs', () => {
+    const value = base();
+    value.project.runtimeBuildId = 'b4397a9a-urls-v1';
+    expect(validateManifest(value).project.runtimeBuildId).toBe('b4397a9a-urls-v1');
+  });
   it.each([
     '../x',
     'pg/../../x',

@@ -1,12 +1,12 @@
 # Runtime integration
 
-The runtime is pinned in `runtime/upstream.lock.json` to supabase/supa-wasm commit `b4397a9a1797a384496ade0bd2f975c0e610ee63`. The application records build `b4397a9a-urls-v1` and the template stamp in every project. It retains the original secret, database password, service list, and seed SQL because upstream checks those inputs before opening a completed store.
+The runtime is pinned in `runtime/upstream.lock.json` to supabase/supa-wasm commit `b4397a9a1797a384496ade0bd2f975c0e610ee63`. The application records build `b4397a9a-relative-v2` and the template stamp in every project. It retains the original secret, database password, service list, and seed SQL because upstream checks those inputs before opening a completed store.
 
 ## Packaging
 
-`scripts/prepare-runtime.mjs` normally downloads a checksum-pinned archive from the application’s private `runtime-b4397a9a-urls-v1` release. This retains the working build independently of expiring upstream Actions artifacts. The archive contains runtime code and a clean upstream database template, never a visitor’s project data. `GH_TOKEN` only needs read access to the application repository for this path.
+`scripts/prepare-runtime.mjs` normally downloads a checksum-pinned archive from the application’s public `runtime-b4397a9a-relative-v2` release. This retains the working build independently of expiring upstream Actions artifacts. The archive contains runtime code and a clean upstream database template, never a visitor’s project data. This path downloads anonymously and needs no GitHub credential.
 
-A source build validates the pinned guest archive checksums, uses the exact upstream source commit and esbuild version, and reconstructs deterministic tar images. The one integration patch replaces the page host’s three hard-coded `/dist/` Worker paths with a compile-time immutable runtime base. The upstream working tree is never edited. Guest code, SQL, and provisioning behavior are otherwise unchanged.
+A source build validates the pinned guest archive checksums, uses the exact upstream source commit and esbuild version, and reconstructs deterministic tar images. The integration patch replaces the page host’s three hard-coded `/dist/` Worker paths with URLs resolved relative to its loaded, versioned `page.js` script. This supports root sites and repository subpaths. The upstream working tree is never edited. Guest code, SQL, and provisioning behavior are otherwise unchanged.
 
 The generated directory contains the page, kernel, process, and probe bundles; PostgreSQL WASM, libraries, and template; Auth and PostgREST WASM; Storage WASM/image; Realtime’s BEAM WASM/release; a checksummed manifest; and upstream notices. Compute, its VM/images, the demo, and test-only guests are excluded.
 
@@ -32,4 +32,6 @@ The Supabase SDK receives the stack’s custom fetch and WebSocket implementatio
 
 The runtime’s internal HTTP/WebSocket traffic goes through the in-browser kernel. Visitors download static assets; project data does not need to be sent to a backend. The production acceptance script checks for unexpected network writes.
 
-The upstream repository currently has internal visibility. The retained release is private as well. Public redistribution and the complete compiled dependency notice set should be reviewed before a public website launch.
+The upstream repository has internal visibility. Supaworld and its retained runtime releases are public. The packaged runtime includes the upstream MIT license and bundled dependency notices. No visitor project data is part of a release.
+
+`b4397a9a-urls-v1` remains explicitly compatible: only host Worker URL resolution changed in relative-v2. Guest binaries, SQL, template stamp, and provisioning inputs are unchanged. Older projects and clean backups keep their recorded build ID and are opened with the compatible host; other unknown versions remain refused.

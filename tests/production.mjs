@@ -41,7 +41,7 @@ try {
   context = await chromium.launchPersistentContext(profile, options);
   let page = context.pages()[0];
   observe(page);
-  const head = await context.request.head(`${origin}/runtime/b4397a9a-urls-v1/auth.wasm`, {
+  const head = await context.request.head(`${origin}/runtime/b4397a9a-relative-v2/auth.wasm`, {
     headers: { 'Accept-Encoding': 'br' },
   });
   expect(head.headers()['content-encoding']).toBe('br');
@@ -101,8 +101,8 @@ try {
   await other.close();
   // Missing cache entries give a recoverable offline error, preserving project files.
   await page.evaluate(async () => {
-    const cache = await caches.open('supaworld-runtime-b4397a9a-urls-v1');
-    await cache.delete('/runtime/b4397a9a-urls-v1/auth.wasm');
+    const cache = await caches.open('supaworld-runtime-b4397a9a-relative-v2');
+    await cache.delete('/runtime/b4397a9a-relative-v2/auth.wasm');
   });
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Open project', exact: true }).click();

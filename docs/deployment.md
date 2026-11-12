@@ -4,7 +4,26 @@ Run `npm ci && npm run build`. The build verifies/downloads the retained runtime
 
 Use a stable HTTPS origin. Switching domain, scheme, or port gives visitors a different browser storage origin. Keep a previous origin available for export if migrating later.
 
-## Required host behavior
+## GitHub Pages
+
+The live site is [burggraf.github.io/supaworld](https://burggraf.github.io/supaworld/). The repository is public so Pages is available on the current GitHub plan. Publishing is configured for GitHub Actions.
+
+`npm run build:pages` produces a `/supaworld/` build. Because Pages does not apply `_headers`, the single PWA service worker adds COOP/COEP/CORP to document, script, Worker, and runtime responses. The bootstrap waits for the worker and reloads once before checking capabilities. This is the same worker that handles offline use and prompted updates. If isolation cannot be established, the normal compatibility screen remains available rather than repeatedly reloading.
+
+The Pages build embeds a document CSP in a meta tag. Runtime assets are fetched explicitly as `.gz` files, streamed through native gzip decompression, verified against the decoded-byte manifest, and cached at canonical URLs. This makes the first shared-runtime download about 57 MB on Pages; later projects reuse it. Header-capable hosts can still negotiate Brotli at about 43 MB.
+
+Local Pages simulation:
+
+```sh
+npm run build:pages
+BASE_PATH=/supaworld/ HEADERLESS=1 PORT=4175 npm run preview
+# Another terminal:
+node tests/pages.mjs
+```
+
+The workflow runs the full browser suite, root-host production checks, and the Pages simulation before uploading `dist/` and deploying it. A failed check prevents publication. This publishes the static application and runtime only; visitor databases are created in their own browser storage.
+
+## Header-capable hosts
 
 - Serve the generated isolation headers on the document and Worker resources: COOP `same-origin`, COEP `require-corp`, and CORP `same-origin`.
 - Serve WASM as `application/wasm`, JavaScript as a script MIME type, and the manifest as `application/manifest+json`.
@@ -60,10 +79,10 @@ server {
 
 Ensure your MIME configuration includes `application/wasm wasm;`. Do not add duplicate MIME declarations if already present. Keep the isolation/CSP headers inherited in every location; Nginx `add_header` inheritance changes if overriding them in a child location.
 
-GitHub Pages requires an isolation bootstrap worker that this release does not provide. The current PWA worker expects real host headers. Use a header-capable host for this version.
+Use the default root build on a header-capable host. The Pages-specific bootstrap and compressed asset transport are selected by `npm run build:pages`; do not upload a root build under a repository subpath.
 
 ## CI
 
-The workflow uses the repository token to fetch the retained private runtime release, checks formatting/types/unit tests, runs the real Chromium suite, builds the site, and tests the compressed production deployment with offline browser restarts. It retains browser failure evidence. The workflow does not publish a public website.
+The workflow uses the repository token to fetch the retained public runtime release, checks formatting/types/unit tests, runs the real Chromium suite, builds the site, and tests the compressed production deployment with offline browser restarts. It retains browser failure evidence. Successful `main` runs publish GitHub Pages; pull-request runs only verify.
 
-For a runtime update, prepare a new build ID, package it with `npm run runtime:pack`, publish the archive/checksum to a new private runtime release, and commit the new lock only after compatibility has been evaluated. Never replace an existing build in place or remove an asset version referenced by saved projects.
+For a runtime update, prepare a new build ID, package it with `npm run runtime:pack`, publish the archive/checksum to a new runtime release, and commit the new lock only after compatibility has been evaluated. Never replace an existing build in place or remove an asset version referenced by saved projects.

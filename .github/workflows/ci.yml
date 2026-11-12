@@ -4,14 +4,22 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -32,6 +40,18 @@ jobs:
           npm run preview > /tmp/supaworld-preview.log 2>&1 &
           curl --retry 15 --retry-connrefused --retry-delay 1 --fail --silent http://127.0.0.1:4173/ > /dev/null
           node tests/production.mjs
+      - run: npm run build:pages
+      - name: Verify GitHub Pages subpath without host isolation headers
+        run: |
+          BASE_PATH=/supaworld/ HEADERLESS=1 PORT=4175 npm run preview > /tmp/supaworld-pages-preview.log 2>&1 &
+          curl --retry 15 --retry-connrefused --retry-delay 1 --fail --silent http://127.0.0.1:4175/supaworld/ > /dev/null
+          node tests/pages.mjs
+      - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: dist
       - name: Upload browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
@@ -41,4 +61,19 @@ jobs:
             test-results/
             playwright-report/
             .cache/production-overview.png
+            .cache/pages-failure.png
           retention-days: 7
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish verified static site
+        id: deployment
+        uses: actions/deploy-pages@v4

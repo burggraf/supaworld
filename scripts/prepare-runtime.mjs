@@ -35,7 +35,7 @@ if (await exists(join(out, 'manifest.json'))) {
     process.exit(0);
   }
 }
-// The private application release retains the exact runtime independently of expiring upstream CI artifacts.
+// The application release retains the exact runtime independently of expiring upstream CI artifacts.
 if (
   lock.distribution &&
   !process.env.SUPAWORLD_UPSTREAM_SOURCE &&
@@ -44,22 +44,12 @@ if (
   const distCache = join(root, '.cache/distributions');
   await mkdir(distCache, { recursive: true });
   const archive = join(distCache, lock.distribution.name);
-  if (!(await exists(archive)))
-    execFileSync(
-      'gh',
-      [
-        'release',
-        'download',
-        lock.distribution.tag,
-        '--repo',
-        lock.distribution.repository,
-        '--pattern',
-        lock.distribution.name,
-        '--dir',
-        distCache,
-      ],
-      { stdio: 'inherit' },
-    );
+  if (!(await exists(archive))) {
+    const url = `https://github.com/${lock.distribution.repository}/releases/download/${lock.distribution.tag}/${lock.distribution.name}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Cannot download retained runtime: HTTP ${response.status}`);
+    await writeFile(archive, new Uint8Array(await response.arrayBuffer()));
+  }
   const sha = createHash('sha256')
     .update(await readFile(archive))
     .digest('hex');
@@ -190,10 +180,9 @@ for (const [guest, name, paths] of [
     ...paths,
   ]);
 }
-await build({
+const buildOptions = {
   entryPoints: Object.fromEntries(
     [
-      ['page', 'host/page'],
       ['kernel', 'kernel/main'],
       ['process', 'process/main'],
       ['probe', 'probe/main'],
@@ -205,7 +194,16 @@ await build({
   target: 'es2022',
   minify: true,
   loader: { '.sql': 'text' },
-  define: { SUPAWORLD_RUNTIME_BASE: JSON.stringify(`/runtime/${lock.buildId}`) },
+};
+await build(buildOptions);
+await build({
+  ...buildOptions,
+  entryPoints: { page: join(source, 'browser/src/host/page.ts') },
+  // Resolve against the actual classic script URL, including a Pages repository prefix.
+  banner: {
+    js: 'var __SUPAWORLD_RUNTIME_BASE__ = new URL(".", document.currentScript.src).href.replace(/\\/$/, "");',
+  },
+  define: { SUPAWORLD_RUNTIME_BASE: '__SUPAWORLD_RUNTIME_BASE__' },
 });
 await cp(join(source, 'bundle/licenses'), join(out, 'licenses'), { recursive: true });
 await cp(join(source, 'LICENSE'), join(out, 'licenses/supa-wasm-LICENSE'));

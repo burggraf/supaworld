@@ -1,5 +1,11 @@
 # Phase 1 verification
 
+GitHub Pages deployment adds runtime `b4397a9a-relative-v2`. Comparing its inventory with urls-v1 shows only `page.js` changed; all guest binaries/images, SQL-bearing process code, and the template stamp are identical. The two recorded build IDs are explicitly compatible. A fresh anonymous download of the new retained release passes its checksum and prepares successfully.
+
+The Pages build passes a separate real-browser scenario at `/supaworld/` on a static host with no isolation headers or negotiated compression: first-visit worker isolation, all five services, gzip transport, SQL durability, offline project creation/switching, no out-of-prefix asset requests, no unexpected project-data network writes, and no uncaught page errors. The unit suite now has 15 passing cases, including prior-build backup compatibility. GitHub Actions repeats these checks before publishing Pages.
+
+Pages uses explicit gzip files (about 56.72 MB for the shared runtime) because it cannot negotiate our Brotli representations. The header-capable Tailscale/root preview continues to use Brotli where available. The earlier measurements below describe the original phase 1 build.
+
 Verified locally on 2026-11-12 with real runtime build `b4397a9a-urls-v1`, Playwright Chromium 158.0.8127.18, Linux x64, and Node 24.22.1. These checks use disposable browser profiles and actual WASM services, not service mocks.
 
 ## Results

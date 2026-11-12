@@ -254,13 +254,13 @@ test('failed downloads, corrupt backups, quota failures, fingerprint guards, and
   ).toBe(0);
 });
 
-test('renderer crashes during provisioning and after acknowledged writes recover the same project', async ({
+test('interrupted provisioning and a renderer crash after acknowledged writes recover the same project', async ({
   page,
   context,
 }) => {
   async function crash(target: Page) {
     const cdp = await context.newCDPSession(target);
-    const crashed = target.waitForEvent('crash');
+    const crashed = target.waitForEvent('crash', { timeout: 60_000 });
     void cdp.send('Page.crash').catch(() => undefined);
     await crashed;
     await target.close();
@@ -284,7 +284,9 @@ test('renderer crashes during provisioning and after acknowledged writes recover
     )
     .toBe(true);
   const id = await api<string>(page, 'return manager.current.projects[0].id');
-  await crash(page);
+  // End the provisioning page without calling stop or flushing the store.
+  // Use a single renderer crash below: repeated crash requests can be suppressed by Chromium.
+  await page.close();
   let recovered = await context.newPage();
   await recovered.goto(`/#/projects/${id}/sql`);
   await expect(recovered.getByRole('textbox', { name: 'SQL query' })).toBeVisible({

@@ -1,9 +1,9 @@
 {
   "repository": "supabase/supa-wasm",
   "commit": "b4397a9a1797a384496ade0bd2f975c0e610ee63",
-  "buildId": "b4397a9a-urls-v1",
+  "buildId": "b4397a9a-relative-v2",
   "runId": 41903696835,
-  "patch": "worker-urls-v1",
+  "patch": "worker-relative-urls-v2",
   "archives": {
     "postgres": {
       "artifactId": 13360241615,
@@ -28,8 +28,8 @@
   },
   "distribution": {
     "repository": "burggraf/supaworld",
-    "tag": "runtime-b4397a9a-urls-v1",
-    "name": "supaworld-runtime-b4397a9a-urls-v1.tar.gz",
-    "sha256": "b4d8a6294a9d125b3e72300c1cd76fc598853f79cf6231ba56afff5be5048117"
+    "tag": "runtime-b4397a9a-relative-v2",
+    "name": "supaworld-runtime-b4397a9a-relative-v2.tar.gz",
+    "sha256": "b0b1fa7c3f3d4fc8e0e297bee2a0bfffd6abe67f7d43fe13dede0246ec119112"
   }
 }

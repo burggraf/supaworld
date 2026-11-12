@@ -3,7 +3,9 @@ import { createReadStream } from 'node:fs';
 import { stat, readFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
-const root = resolve(import.meta.dirname, '../dist');
+const root = resolve(process.env.DIST_DIR ?? resolve(import.meta.dirname, '../dist'));
+const base = process.env.BASE_PATH ?? '/';
+const headerless = process.env.HEADERLESS === '1';
 const csp = JSON.parse(await readFile(resolve(root, 'csp.json'), 'utf8')).policy;
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -17,14 +19,22 @@ const types = {
   '.png': 'image/png',
 };
 createServer(async (req, res) => {
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  if (!headerless) {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    res.setHeader('Content-Security-Policy', csp);
+  }
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Content-Security-Policy', csp);
   res.setHeader('Referrer-Policy', 'same-origin');
   try {
-    const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    const requestPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    if (!requestPath.startsWith(base)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    const path = '/' + requestPath.slice(base.length);
     let file = resolve(root, `.${path === '/' ? '/index.html' : path}`);
     if (!file.startsWith(root + sep)) {
       res.writeHead(403);
@@ -38,7 +48,7 @@ createServer(async (req, res) => {
       return;
     }
     const type = types[extname(file)] ?? 'application/octet-stream';
-    const enc = req.headers['accept-encoding'] ?? '';
+    const enc = headerless ? '' : (req.headers['accept-encoding'] ?? '');
     for (const [token, suffix] of [
       ['br', '.br'],
       ['gzip', '.gz'],

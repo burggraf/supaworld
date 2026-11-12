@@ -5,6 +5,14 @@ const hashes = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/scrip
   (m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`,
 );
 const csp = `default-src 'self'; script-src 'self' 'wasm-unsafe-eval' ${hashes.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`;
+if (process.env.VITE_PAGES === '1') {
+  // Pages ignores _headers. Protect the document with a meta policy there.
+  await writeFile(
+    new URL('../dist/index.html', import.meta.url),
+    html.replace('<head>', `<head>\n<meta http-equiv="Content-Security-Policy" content="${csp}">`),
+  );
+  await writeFile(new URL('../dist/.nojekyll', import.meta.url), '');
+}
 await writeFile(
   new URL('../dist/_headers', import.meta.url),
   `/*

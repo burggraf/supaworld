@@ -89,16 +89,35 @@ export async function prepareArtifacts(
             }
             if (!cached) {
               progress(done, total, `Downloading ${file.name}`);
-              const r = await fetch(path, { signal: combined, cache: 'reload' });
+              // Pages cannot negotiate our precompressed files. Cache verified decoded bytes.
+              const compressed = import.meta.env.VITE_PAGES === '1' && file.size >= 1024;
+              const r = await fetch(compressed ? `${path}.gz` : path, {
+                signal: combined,
+                cache: 'reload',
+              });
               if (!r.ok)
                 throw new Error(
                   `Could not download ${file.name}. Check your connection and retry.`,
                 );
-              const bytes = await r.arrayBuffer();
+              const bytes = compressed
+                ? await new Response(
+                    r.body!.pipeThrough(new DecompressionStream('gzip')),
+                  ).arrayBuffer()
+                : await r.arrayBuffer();
               await verifyDigest(bytes, file.sha256);
               if (bytes.byteLength !== file.size) throw new Error('Runtime file length mismatch.');
               const headers = new Headers(r.headers);
               headers.delete('content-encoding');
+              headers.set(
+                'content-type',
+                file.name.endsWith('.wasm')
+                  ? 'application/wasm'
+                  : file.name.endsWith('.js')
+                    ? 'text/javascript; charset=utf-8'
+                    : file.name.endsWith('.tar')
+                      ? 'application/x-tar'
+                      : 'text/plain',
+              );
               headers.set('content-length', String(bytes.byteLength));
               await cache.put(path, new Response(bytes, { headers }));
             }

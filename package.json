@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "npm run check && npm run format:check",
-    "runtime:pack": "node scripts/runtime-distribution.mjs"
+    "runtime:pack": "node scripts/runtime-distribution.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "dependencies": {
     "@lucide/svelte": "^1.72.0",

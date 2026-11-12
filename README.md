@@ -8,11 +8,10 @@ The UI uses **Svelte 5, Vite, TypeScript, shadcn-svelte, and Tailwind CSS 4**. T
 
 ## Run locally
 
-Use Node 24+, npm, and GitHub CLI. Access to this private repository’s retained runtime release is required during preparation; website visitors need no GitHub credentials.
+Use Node 24+ and npm. The build downloads a checksum-pinned public runtime release; no GitHub credentials are needed. GitHub CLI is only needed when rebuilding from internal upstream artifacts.
 
 ```sh
 npm ci
-gh auth status
 npm run runtime:prepare
 npm run dev
 ```
@@ -53,7 +52,11 @@ npm run preview
 
 The production preview is at `http://localhost:4173`. It serves the files in `dist/`, including precompressed Brotli/gzip assets, isolation headers, and the generated content security policy. It performs no database or application processing.
 
-Deploy `dist/` to an HTTPS static host that supports response headers and large assets. The generated `_headers` file describes the header contract; [deployment instructions](docs/deployment.md) include an Nginx example. GitHub Pages and hosts with small per-file limits are not supported deployment targets in this release.
+The public app is at [burggraf.github.io/supaworld](https://burggraf.github.io/supaworld/). GitHub Actions tests and deploys the Pages build after changes to `main`.
+
+For GitHub Pages, run `npm run build:pages`. It uses `/supaworld/`, a single isolation/offline service worker, and explicit gzip runtime downloads (about 57 MB on first use). A first visit reloads once to establish browser isolation.
+
+For other hosts, deploy the default `dist/` build to an HTTPS static host that supports response headers and large assets. The generated `_headers` file describes the header contract; [deployment instructions](docs/deployment.md) include an Nginx example. Hosts with small per-file limits need a different asset-distribution arrangement.
 
 The lightweight shell loads before WASM. Opening the first project verifies and caches the shared runtime. In the production app, use **Storage & offline → Prepare offline** to explicitly prepare all services. The service worker never caches database contents or deletes project data. Updates prompt before activation and require open projects in other tabs to be stopped.
 

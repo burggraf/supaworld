@@ -10,7 +10,7 @@ import {
   withOperation,
 } from '../platform/locks';
 import * as repo from '../projects/repository';
-import { RUNTIME_BUILD } from '../runtime/config';
+import { RUNTIME_BUILD, COMPATIBLE_RUNTIME_BUILDS } from '../runtime/config';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const MAGIC = encoder.encode('SUPAWORLD1\n');
@@ -57,7 +57,7 @@ export function validateManifest(value: unknown): BackupManifest {
   )
     throw new Error('Project configuration is missing.');
   validateName(m.project.name);
-  if (m.project.runtimeBuildId !== RUNTIME_BUILD)
+  if (!COMPATIBLE_RUNTIME_BUILDS.includes(m.project.runtimeBuildId))
     throw new Error(
       `This backup requires runtime ${m.project.runtimeBuildId}. Keep the original file for a compatible version.`,
     );

@@ -12,7 +12,12 @@ import {
   storeRoot,
 } from '../platform/locks';
 import { loadHost, manifest, prepareArtifacts } from '../runtime/artifacts';
-import { RUNTIME_BASE, RUNTIME_BUILD, SERVICES } from '../runtime/config';
+import {
+  RUNTIME_BASE,
+  RUNTIME_BUILD,
+  COMPATIBLE_RUNTIME_BUILDS,
+  SERVICES,
+} from '../runtime/config';
 import type { RuntimeStack, GateState } from '../runtime/types';
 import { PgClient, type QueryResult } from '../runtime/pgwire';
 import { message } from '../utils';
@@ -182,7 +187,7 @@ export class ProjectManager {
     const project = await repo.getProject(id);
     if (project.lifecycle === 'deleting' || (project.lifecycle === 'importing' && !restoring))
       throw new Error('Finish this project’s pending recovery operation before opening it.');
-    if (project.runtimeBuildId !== RUNTIME_BUILD)
+    if (!COMPATIBLE_RUNTIME_BUILDS.includes(project.runtimeBuildId))
       throw new Error(
         `This project needs runtime ${project.runtimeBuildId}. You can still export its files.`,
       );
