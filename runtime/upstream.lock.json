@@ -1,0 +1,35 @@
+{
+  "repository": "supabase/supa-wasm",
+  "commit": "b4397a9a1797a384496ade0bd2f975c0e610ee63",
+  "buildId": "b4397a9a-urls-v1",
+  "runId": 41903696835,
+  "patch": "worker-urls-v1",
+  "archives": {
+    "postgres": {
+      "artifactId": 13360241615,
+      "sha256": "fcec0ceb1517f5985af59c531cb17e80fd3186604f07ba55ae066a9b8906969e"
+    },
+    "postgrest": {
+      "artifactId": 13358194709,
+      "sha256": "3a2bb5ea26050f2d0b582a151fe80d41cc7a0412edd699654e078fecc1b55d80"
+    },
+    "auth": {
+      "artifactId": 13358449681,
+      "sha256": "ca0b8ca95584ba22fb2d695a4bd2b68691af09c11bf45ff85f28a10a97b8ef01"
+    },
+    "storage": {
+      "artifactId": 13358334752,
+      "sha256": "f7d04031e4c0585b98bd054ada6ebb5d476ae385b8aea87c5be0a2820dcf1a08"
+    },
+    "realtime": {
+      "artifactId": 13358604533,
+      "sha256": "a13d7adfc58e792fa89593f009e32e825481b350c571c010b85f21fb889b06af"
+    }
+  },
+  "distribution": {
+    "repository": "burggraf/supaworld",
+    "tag": "runtime-b4397a9a-urls-v1",
+    "name": "supaworld-runtime-b4397a9a-urls-v1.tar.gz",
+    "sha256": "b4d8a6294a9d125b3e72300c1cd76fc598853f79cf6231ba56afff5be5048117"
+  }
+}

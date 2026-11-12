@@ -1,0 +1,8 @@
+node_modules
+dist
+.cache
+public/runtime
+package-lock.json
+docs/phase-1-plan.md
+playwright-report
+test-results

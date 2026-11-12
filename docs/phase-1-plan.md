@@ -1,7 +1,7 @@
 # Supaworld: phase 1 implementation plan
 
 - Date: 2026-11-12
-- Status: proposed implementation plan; application not yet implemented
+- Status: phase 1 implemented; see README for usage and tested limits. Original design retained below.
 - Repository: [burggraf/supaworld](https://github.com/burggraf/supaworld)
 - Upstream inspected: `../supa-wasm`, commit [`b4397a9a1797a384496ade0bd2f975c0e610ee63`](https://github.com/supabase/supa-wasm/tree/b4397a9a1797a384496ade0bd2f975c0e610ee63)
 
@@ -417,7 +417,7 @@ CI should run formatting, linting, `svelte-check`/TypeScript, focused unit tests
 
 ## 15. Proposed repository structure
 
-This is the intended layout once implementation starts. Only the planning documentation and repository housekeeping files exist at this point.
+This was the proposed layout before implementation. See the repository tree and README for the implemented files and commands.
 
 ```text
 src/
